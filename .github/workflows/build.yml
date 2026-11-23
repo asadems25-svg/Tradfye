@@ -18,21 +18,29 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Accept Android licenses
+      - uses: android-actions/setup-android@v3
+
+      - name: Locate SDK Manager and accept licenses
+        shell: bash
         run: |
-          yes | sdkmanager --licenses || true
+          set -e
+          SDKMANAGER=$(find /usr/local/lib/android/sdk/cmdline-tools -type f -name sdkmanager | head -n 1)
+          echo "SDK Manager: $SDKMANAGER"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses || true
 
       - name: Install Android SDK
+        shell: bash
         run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          SDKMANAGER=$(find /usr/local/lib/android/sdk/cmdline-tools -type f -name sdkmanager | head -n 1)
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
       - name: Extract project
-        run: |
-          unzip -q TradfyeAndroid_Project.zip -d source
+        run: unzip -q TradfyeAndroid_Project.zip -d source
 
       - name: Build APK
         run: gradle -p source assembleDebug
